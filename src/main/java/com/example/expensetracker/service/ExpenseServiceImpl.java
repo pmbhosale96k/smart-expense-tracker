@@ -2,6 +2,7 @@ package com.example.expensetracker.service;
 
 import com.example.expensetracker.dto.ExpenseRequest;
 import com.example.expensetracker.dto.ExpenseResponse;
+import com.example.expensetracker.dto.TopCategoryResponse;
 import com.example.expensetracker.exception.ExpenseNotFoundException;
 import com.example.expensetracker.model.Category;
 import com.example.expensetracker.model.Expense;
@@ -61,17 +62,16 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public Map<String, Object> getOverallSummary() {
-    List<Expense> expenses = repository.findAll();
+        List<Expense> expenses = repository.findAll();
 
-    BigDecimal total = expenses.stream()
-            .map(Expense::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = expenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    return Map.of(
-            "totalExpense", total,
-            "totalRecords", expenses.size()
-    );
-}
+        return Map.of(
+                "totalExpense", total,
+                "totalRecords", expenses.size());
+    }
 
     @Override
     public Map<String, Object> getCategorySummary(String category) {
@@ -97,6 +97,40 @@ public class ExpenseServiceImpl implements ExpenseService {
         }
 
         repository.deleteById(id);
+    }
+
+    @Override
+    public List<ExpenseResponse> searchExpense(String keyword) {
+        String searchKey = keyword.toLowerCase();
+
+        return repository.findAll()
+                .stream()
+                .filter(exp -> exp.getTitle() != null && exp.getTitle().toLowerCase().contains(searchKey))
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public TopCategoryResponse getTopSpendingCategory() {
+
+        Map<Category, BigDecimal> categoryTotals = repository.findAll()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        Expense::getCategory,
+                        Collectors.reducing(
+                                BigDecimal.ZERO,
+                                Expense::getAmount,
+                                BigDecimal::add)));
+
+        Map.Entry<Category, BigDecimal> highest = categoryTotals.entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow(() -> new IllegalStateException("No expenses available"));
+
+        return TopCategoryResponse.builder()
+                .category(highest.getKey())
+                .totalExpense(highest.getValue())
+                .build();
     }
 
     private ExpenseResponse mapToResponse(Expense expense) {

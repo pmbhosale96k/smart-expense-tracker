@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.expensetracker.dto.ExpenseRequest;
 import com.example.expensetracker.dto.ExpenseResponse;
+import com.example.expensetracker.dto.TopCategoryResponse;
 import com.example.expensetracker.service.ExpenseService;
 
 import jakarta.validation.Valid;
@@ -71,6 +72,20 @@ public class ExpenseController {
         service.deleteExpense(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ExpenseResponse>> searchExpenses(
+            @RequestParam String keyword) {
+
+        return ResponseEntity.ok(service.searchExpense(keyword));
+    }
+
+    @GetMapping("/analytics/top-category")
+    public ResponseEntity<TopCategoryResponse> getTopCategory() {
+
+        return ResponseEntity.ok(
+                service.getTopSpendingCategory());
     }
 
 }
