@@ -27,7 +27,7 @@ public class ExpenseRequest {
     private BigDecimal amount;
 
     @NotNull(message = "Category is required")
-    private Category category;
+    private String category;
 
     @NotNull(message = "Date is required")
     @PastOrPresent(message = "Date cannot be in the future")

@@ -2,6 +2,7 @@ package com.example.expensetracker.service;
 
 import com.example.expensetracker.dto.ExpenseRequest;
 import com.example.expensetracker.dto.ExpenseResponse;
+import com.example.expensetracker.exception.ExpenseNotFoundException;
 import com.example.expensetracker.model.Category;
 import com.example.expensetracker.model.Expense;
 import com.example.expensetracker.repository.ExpenseRepository;
@@ -23,11 +24,12 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public ExpenseResponse addExpense(ExpenseRequest request) {
+        Category expenseCategory = Category.valueOf(request.getCategory().trim().toUpperCase());
 
         Expense expense = Expense.builder()
                 .title(request.getTitle())
                 .amount(request.getAmount())
-                .category(request.getCategory())
+                .category(expenseCategory)
                 .date(request.getDate())
                 .build();
 
@@ -48,7 +50,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     public List<ExpenseResponse> getExpensesByCategory(String category) {
 
-        Category expenseCategory = Category.valueOf(category.toUpperCase());
+        Category expenseCategory = Category.valueOf(category.trim().toUpperCase());
 
         return repository.findAll()
                 .stream()
@@ -59,18 +61,17 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     @Override
     public Map<String, Object> getOverallSummary() {
+    List<Expense> expenses = repository.findAll();
 
-        List<Expense> expenses = repository.findAll();
+    BigDecimal total = expenses.stream()
+            .map(Expense::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal total = expenses.stream()
-                .map(Expense::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return Map.of(
-                "totalExpense", total,
-                "totalRecords", expenses.size()
-        );
-    }
+    return Map.of(
+            "totalExpense", total,
+            "totalRecords", expenses.size()
+    );
+}
 
     @Override
     public Map<String, Object> getCategorySummary(String category) {
@@ -85,12 +86,15 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         return Map.of(
                 "category", expenseCategory,
-                "totalExpense", total
-        );
+                "totalExpense", total);
     }
 
     @Override
     public void deleteExpense(Long id) {
+
+        if (!repository.existsById(id)) {
+            throw new ExpenseNotFoundException(id);
+        }
 
         repository.deleteById(id);
     }
@@ -105,4 +109,5 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .date(expense.getDate())
                 .build();
     }
+
 }

@@ -23,7 +23,7 @@ public class ExpenseRepository {
         return expense;
     }
 
-    public List<Expense> findAll(){
+    public List<Expense> findAll() {
         return new ArrayList<>(expenseMap.values());
     }
 
@@ -34,4 +34,9 @@ public class ExpenseRepository {
     public void deleteById(Long id) {
         expenseMap.remove(id);
     }
+
+    public boolean existsById(Long id) {
+        return expenseMap.containsKey(id);
+    }
+    
 }
