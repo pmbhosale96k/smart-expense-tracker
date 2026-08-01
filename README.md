@@ -24,7 +24,7 @@ A RESTful API built using **Java Spring Boot** to manage personal expenses. The 
 
 ## 🛠️ Tech Stack
 
-- Java 21
+- Java 17
 - Spring Boot 3
 - Maven
 - Lombok
